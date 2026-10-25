@@ -29,7 +29,7 @@ permissions:
 
 env:
   NODE_VERSION: '24'
-  PACKAGE_NAME: 'dsh-pet-bridge'
+  PACKAGE_NAME: '@xiaopb/dsh-pet-bridge'
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
