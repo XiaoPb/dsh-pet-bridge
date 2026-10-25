@@ -17,7 +17,7 @@
  * 退出码：全部符合预期 → 0；任一不符 → 1。假数据仅五字段协议，不影响宠物状态机。
  */
 
-const http = require('node:http')
+import http from 'node:http'
 
 const args = process.argv.slice(2)
 function argOf(flag, fallback) {
@@ -29,6 +29,7 @@ const TOKEN = argOf('--token', process.env.DSH_PET_BRIDGE_TOKEN || '')
 
 function request(method, path, headers, body) {
   return new Promise((resolve, reject) => {
+    if (body) headers['Content-Length'] = Buffer.byteLength(body)
     const req = http.request(
       `http://127.0.0.1:${PORT}${path}`,
       { method, headers },
