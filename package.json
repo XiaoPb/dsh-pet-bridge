@@ -1,7 +1,7 @@
 {
   "name": "dsh-pet-bridge",
-  "version": "0.2.0",
-  "description": "DSH server plugin: push dsh session status to the DSH Mobile desktop pet (127.0.0.1:7779). Token-aware fork of upstream 0.1.0: every POST /bubble carries the X-DSH-Pet-Token header read from DSH_PET_BRIDGE_TOKEN.",
+  "version": "0.3.0",
+  "description": "DSH server plugin: bridge dsh-pet (desktop pet) and publish its events & info outward — listen to dsh-pet /state directly, replay-fallback via session/event, webhook push + loopback pull server, token-authenticated. Keeps the v0.2.0 /bubble push (X-DSH-Pet-Token) to the DSH Mobile desktop pet.",
   "main": "lib/index.js",
   "exports": {
     ".": "./lib/index.js",
@@ -11,10 +11,17 @@
     "lib",
     "cordis.patch.yml"
   ],
+  "scripts": {
+    "test": "node --test --test-force-exit test/*.test.js",
+    "smoke": "node tools/smoke-e2e.mjs"
+  },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
+  },
+  "engines": {
+    "node": ">=22.12.0"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1"

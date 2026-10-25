@@ -1,0 +1,56 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: compatibility
+
+# 结构参考 dsh-hardssh 的 compat 工作流；本包无 DSH 组件矩阵（对宿主的唯一
+# 依赖是 cordis apply 契约 + session/event 事件名，均为运行时约定），因此
+# 矩阵维度为 Node 版本 × 验证面（单测 + E2E 冒烟 + 打包形状）。
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: Node ${{ matrix.node }} / ${{ matrix.suite }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['22.12.0', '24']
+        suite: [unit, smoke, pack]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Unit tests
+        if: matrix.suite == 'unit'
+        run: npm test
+
+      - name: E2E smoke
+        if: matrix.suite == 'smoke'
+        run: npm run smoke
+
+      - name: Pack (dry-run)
+        if: matrix.suite == 'pack'
+        run: npm pack --dry-run --ignore-scripts
+
+      - name: Verify publish shape
+        if: matrix.suite == 'pack'
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm pack --ignore-scripts --pack-destination "$RUNNER_TEMP"
+          TARBALL="$(ls "$RUNNER_TEMP"/*.tgz)"
+          tar -tzf "${TARBALL}" | grep -qx 'package/lib/index.js' \
+            || { echo "::error::lib/index.js missing from tarball"; exit 1; }
+          tar -tzf "${TARBALL}" | grep -qx 'package/cordis.patch.yml' \
+            || { echo "::error::cordis.patch.yml missing from tarball"; exit 1; }
+          echo "tarball shape OK"
