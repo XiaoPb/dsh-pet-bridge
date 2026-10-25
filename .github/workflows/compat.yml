@@ -49,8 +49,15 @@ jobs:
           set -euo pipefail
           npm pack --ignore-scripts --pack-destination "$RUNNER_TEMP"
           TARBALL="$(ls "$RUNNER_TEMP"/*.tgz)"
-          tar -tzf "${TARBALL}" | grep -qx 'package/lib/index.js' \
-            || { echo "::error::lib/index.js missing from tarball"; exit 1; }
-          tar -tzf "${TARBALL}" | grep -qx 'package/cordis.patch.yml' \
-            || { echo "::error::cordis.patch.yml missing from tarball"; exit 1; }
+          # Materialize the listing once: `tar -tzf | grep -q` can return SIGPIPE
+          # from tar after grep's early exit, and pipefail would then report a
+          # PRESENT path as missing ("tar: stdout: write error").
+          TARBALL_LIST="$RUNNER_TEMP/tarball-files.txt"
+          tar -tzf "${TARBALL}" > "${TARBALL_LIST}"
+          for path in package/lib/index.js package/cordis.patch.yml package/package.json; do
+            if ! grep -qxF "${path}" "${TARBALL_LIST}"; then
+              echo "::error::${path} is missing from the npm tarball"
+              exit 1
+            fi
+          done
           echo "tarball shape OK"
