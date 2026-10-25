@@ -1,5 +1,5 @@
 {
-  "name": "dsh-pet-bridge",
+  "name": "@xiaopb/dsh-pet-bridge",
   "version": "0.3.0",
   "description": "DSH server plugin: bridge dsh-pet (desktop pet) and publish its events & info outward — listen to dsh-pet /state directly, replay-fallback via session/event, webhook push + loopback pull server, token-authenticated. Keeps the v0.2.0 /bubble push (X-DSH-Pet-Token) to the DSH Mobile desktop pet.",
   "main": "lib/index.js",
@@ -26,5 +26,8 @@
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
 }
