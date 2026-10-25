@@ -84,9 +84,13 @@ adb forward tcp:17779 tcp:7779
 node tools/verify-apk.mjs --token <DSH_PET_BRIDGE_TOKEN> --port 17779
 ```
 
-## 安装（本地路径）
+## 安装
 
 ```sh
+# 从 npm 安装（推荐）
+dsh plugin --profile web add @xiaopb/dsh-pet-bridge
+
+# 或本地路径安装
 dsh plugin --profile web add /path/to/dsh-pet-bridge
 # 之后重启引擎（bundle 插件不热加载）
 ```
