@@ -4,6 +4,27 @@ DSH 服务端插件：**桥接 [dsh-pet](https://github.com/PC2005-cloud/dsh-pet
 
 源自 npm 上游 `dsh-pet-bridge@0.1.0`（[wsxwj123/dsh-plugins](https://github.com/wsxwj123/dsh-plugins)，MIT）；工作状态聚合语义移植自 dsh-pet 0.3.8（MIT）。当前版本协议与 0.2.x 兼容（`/bubble` 行为不变）。
 
+## 安装
+
+```bash
+# npm（推荐）
+dsh plugin add @xiaopb/dsh-pet-bridge
+
+# 或直接从 GitHub 装
+dsh plugin add github:XiaoPb/dsh-pet-bridge
+```
+
+> 无 scope 的同名包 `dsh-pet-bridge` 只有上游 0.1.0（归原作者所有，无法发新版），**不兼容带鉴权的 DSH Mobile**。
+
+## 与 DSH Mobile 的兼容矩阵
+
+| DSH Mobile | 要求的本插件版本 | `/bubble` 协议 |
+|---|---|---|
+| ≥ v1.4.21（协议 v2） | **≥ 0.3.1** | 必带 `X-DSH-Pet-Token`（fail-closed 403），显式 `Content-Length` |
+| < v1.4.21（协议 v1） | 0.1.x（上游） | 无 token |
+
+0.3.1 同时修了上游 0.1.0 的真 bug：`push()` 未设 `Content-Length`（Node 走 chunked 编码），而 APK 只按定长读 body，**必然回 400** —— 这是「插件已连接但桌宠没有事件」的隐性根因。App 侧从 v1.4.21 起按版本硬门禁，低于 0.3.1 会提示「需 0.3.1+」并禁止开启桌宠。
+
 ## 架构：怎么对接 dsh-pet
 
 dsh-pet 是自包含插件，通过 `session/event` 内部监听把 DSH 会话事件聚合成 6 档工作状态（thinking / working / result / waiting / success / error）+ todo 任务详情，发布在自己的 HTTP 路由上（桌面 Helper 消费同一份）。本桥两条数据通道对接：
