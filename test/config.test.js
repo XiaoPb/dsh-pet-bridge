@@ -70,14 +70,17 @@ test('normalizeTargets：过滤非法项并归一字段', () => {
   assert.equal(t[0].header, undefined)
 })
 
-test('buildPayload：五字段契约不变（v0.2.0 /bubble 协议）', () => {
+test('buildPayload：五字段契约不变 + v0.3.3 可选 text（protocol 3）', () => {
   const p = buildPayload('pre', 'bash', { command: 'ls' })
-  assert.deepEqual(Object.keys(p).sort(), ['agent_source', 'caller_pid', 'kind', 'tool_input', 'tool_name'])
+  assert.deepEqual(Object.keys(p).sort(), ['agent_source', 'caller_pid', 'kind', 'text', 'tool_input', 'tool_name'])
   assert.equal(p.agent_source, 'dsh')
   assert.equal(p.kind, 'pre')
   assert.equal(p.tool_name, 'bash')
   assert.deepEqual(p.tool_input, { command: 'ls' })
   assert.equal(p.caller_pid, process.pid)
+  assert.equal(p.text, null) // 缺省归一为 null：旧 App 忽略未知字段，向后兼容
   assert.equal(buildPayload('user').tool_name, null)
   assert.equal(buildPayload('user').tool_input, null)
+  assert.equal(buildPayload('user', null, null, '整理依赖').text, '整理依赖')
+  assert.equal(buildPayload('user', null, null, '').text, null) // 空串归一 null
 })

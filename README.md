@@ -21,9 +21,19 @@ dsh plugin add github:XiaoPb/dsh-pet-bridge
 | DSH Mobile | 要求的本插件版本 | `/bubble` 协议 |
 |---|---|---|
 | ≥ v1.4.21（协议 v2） | **≥ 0.3.1** | 必带 `X-DSH-Pet-Token`（fail-closed 403），显式 `Content-Length` |
+| 支持 protocol 3 的版本（未发布） | ≥ 0.3.3 | v2 基础上新增可选 `text` 字段（dsh-pet 任务详情直显） |
 | < v1.4.21（协议 v1） | 0.1.x（上游） | 无 token |
 
 0.3.1 同时修了上游 0.1.0 的真 bug：`push()` 未设 `Content-Length`（Node 走 chunked 编码），而 APK 只按定长读 body，**必然回 400** —— 这是「插件已连接但桌宠没有事件」的隐性根因。App 侧从 v1.4.21 起按版本硬门禁，低于 0.3.1 会提示「需 0.3.1+」并禁止开启桌宠。
+
+**0.3.2（2026-10-28）**：`/bubble` 五类 kind 改为**直接从 `session/event` 事件流派生**（turn/start→user、tool/call→pre、tool/result→post、turn/end→stop），不再依赖 `agent/created` + `agent.session.events` 轮询。原因：dsh 0.2.1-rc.x（sessionFormatVersion 4，DSH Mobile v1.4.29 实测）重构了 session 对象，`events` 数组不复存在（变为 `log`/`eventsSnapshot`/`derived` 等内部结构），agentWatcher 的 `Array.isArray(sess.events)` 守卫恒 false——症状正是「App 内 dsh-pet 有状态、桥接的手机桌宠无事件」。事件流通道与 session 内部形状解耦；agent 轮询仅保留给不支持 `session/event` 的老宿主作兜底。
+
+**0.3.3（2026-10-28）**：气泡内容与 dsh-pet 对齐。协议 v2 里没有文本字段，原生侧只能按 `kind + tool_name + tool_input` 拼固定模板（"正在运行 bash" 这类），而 dsh-pet 浏览器宠物显示的是 `workStatus.task`（todo 任务详情，≤40 字）——两端内容天然不一致。本版起：
+
+1. `/bubble` payload 新增可选 **`text`** 字段，内容取 dsh-pet 聚合的任务详情（listen 直连快照 / replay 本地归约两路同源），净化规则与 dsh-pet 一致（去控制字符、压缩空白、`TASK_TEXT_MAX`=40 code points 截断）；`turn/start` 清空、`todo/write` 更新，与 dsh-pet `WorkStatusStore` 语义相同。旧 App 忽略未知字段，完全向后兼容。
+2. kind 映射对齐 dsh-pet `reduceWorkStatus` 的 6 档语义：`tool/call` 名为 `ask_user_question` 或 `approval/asked` 事件 → `waiting`；`turn/end` 按 `reason.kind` 细分（completed→stop、error/max-tokens/timeout→error、blocked→waiting、其余→stop）。
+
+App 侧需配套（`PetProtocol.kt` 解析 `text`、`PetActionController.kt` 优先直显，protocol 2→3），未升级的 APK 上 text 被忽略、仍走模板，无副作用。
 
 ## 架构：怎么对接 dsh-pet
 

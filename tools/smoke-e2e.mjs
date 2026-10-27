@@ -136,14 +136,17 @@ async function main() {
   assert.equal(JSON.parse(evHit.body).sessionId, 'sess-1')
   assert.equal(JSON.parse(evHit.body).event.type, 'tool/call')
 
-  // 3. 桌宠 /bubble：agent/created → 轮询游标读 agent.session.events → pre 推送
-  const fakeAgent = { session: { header: { id: 'sess-1' }, events: [] } }
-  handlers['agent/created']({ agent: fakeAgent })
-  fakeAgent.session.events.push({ type: 'tool/call', data: { name: 'bash', arguments: '{"command":"ls"}' } })
-  const bubbleHit = await rx.waitFor((h) => h.url === '/bubble')
+  // 3. 桌宠 /bubble：session/event 直推（v0.3.2：不再依赖 agent/created → agent.session.events
+  //    轮询；0.2.1-rc.x 起 session 对象无 events 数组，事件流通道与内部形状解耦）
+  //    v0.3.3：payload 额外带 text = dsh-pet 聚合的任务详情（此处为步骤 1 的直连快照）
+  await rx.waitFor((h) => h.url === '/bubble')
+  const bubbleHit = rx.hits.find((h) => h.url === '/bubble')
+  assert.ok(bubbleHit, 'session/event 直推产生 /bubble')
   assert.equal(bubbleHit.headers['x-dsh-pet-token'], 'smoke-token')
-  assert.equal(JSON.parse(bubbleHit.body).kind, 'pre')
-  assert.deepEqual(JSON.parse(bubbleHit.body).tool_input, { command: 'ls' })
+  const bubbleBody = JSON.parse(bubbleHit.body)
+  assert.equal(bubbleBody.kind, 'pre')
+  assert.deepEqual(bubbleBody.tool_input, { command: 'ls' })
+  assert.equal(bubbleBody.text, '直连快照')
 
   // 4. 回环拉取服务：/work-status（Token 鉴权）
   //    serverPort=0 → 真实端口从 webhook 不可知；改由 server 模块直接验证已覆盖（单测）。
