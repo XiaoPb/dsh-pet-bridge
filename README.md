@@ -44,6 +44,12 @@ App 侧需配套（`PetProtocol.kt` 解析 `text`、`PetActionController.kt` 优
 
 实现说明：dsh 设置服务按插件导出的 `Config` schema 自动生成表单页；引擎内置的 `@deepseek-ai/schemastery` 对第三方插件不可解析，因此随包 vendor 了 npm `schemastery@3.18.0` + `cosmokit@1.8.1`（均为 MIT，见 `lib/vendor/`）。schema 加载失败时静默降级（无设置页，开关默认开，行为不变）。
 
+**0.3.6（2026-10-28）**：设置开关改为**自绘设置分区**（双面插件）。实测发现 Android 端的 dsh 设置（原生设置页 + webview 弹窗）不渲染第三方插件的 Config schema 表单（那是桌面 web 设置的能力），参照 dsh-pet「桌宠配置」的官方方式补了浏览器半侧：
+
+- `package.json` 声明 `exports["./client"]` + `dsh.client: { platform: "web" }`，浏览器半侧 `lib/client.js` 经 `window.__ModuleLoader__.load` 注册 **`settings.section` slot**（id `pet-bridge-config`，label「桌宠桥接」），设置页里出现一个开关卡片，即时读写；
+- 宿主半侧经 `webServer.register` 挂 **`GET/PUT /dsh-pet-bridge-7781/config`**：GET 返回当前生效值与持久化值；PUT `{selfPublishRandomLines: boolean}` **即时生效**（`bubbleText` 每次推送现读运行时 cfg）并**持久化**到 `$DSH_HOME/profiles/web/cordis.patch.yml` 的 `id: pet-bridge` 覆盖条目（官方 patch 层按 id 覆盖机制；开=删除条目回缺省，关=写入/合并最小条目，YAML 只做行级操作，绝不重排用户其他条目），重启后依然生效，无需重启引擎；
+- 0.3.5 的 `Config` schema 保留（桌面 web 设置仍可用）；webServer 缺失或路由重复注册时静默降级，主流程不受影响。
+
 ## 架构：怎么对接 dsh-pet
 
 dsh-pet 是自包含插件，通过 `session/event` 内部监听把 DSH 会话事件聚合成 6 档工作状态（thinking / working / result / waiting / success / error）+ todo 任务详情，发布在自己的 HTTP 路由上（桌面 Helper 消费同一份）。本桥两条数据通道对接：

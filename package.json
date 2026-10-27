@@ -1,10 +1,11 @@
 {
   "name": "@xiaopb/dsh-pet-bridge",
-  "version": "0.3.5",
-  "description": "DSH server plugin: bridge dsh-pet (desktop pet) and publish its events & info outward — listen to dsh-pet /state directly, replay-fallback via session/event, webhook push + loopback pull server, token-authenticated. Keeps the v0.2.0 /bubble push (X-DSH-Pet-Token) to the DSH Mobile desktop pet.",
+  "version": "0.3.6",
+  "description": "DSH server plugin: bridge dsh-pet (desktop pet) and publish its events & info outward — listen to dsh-pet /state directly, replay-fallback via session/event, webhook push + loopback pull server, token-authenticated. Keeps the v0.2.0 /bubble push (X-DSH-Pet-Token) to the DSH Mobile desktop pet. v0.3.6 adds a dual-face client half: a settings-section card to toggle self-published random lines.",
   "main": "lib/index.js",
   "exports": {
     ".": "./lib/index.js",
+    "./client": "./lib/client.js",
     "./package.json": "./package.json"
   },
   "files": [
@@ -18,6 +19,10 @@
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [],
+      "platform": "web"
     }
   },
   "engines": {
