@@ -56,6 +56,30 @@ test('normalizeConfig：config.token 优先于环境变量；非法 mode 归 aut
   }
 })
 
+test('normalizeConfig：v0.3.5 selfPublishRandomLines 默认开、可显式关闭', () => {
+  const d = normalizeConfig({})
+  assert.equal(d.selfPublishRandomLines, true)
+  const off = normalizeConfig({ selfPublishRandomLines: false })
+  assert.equal(off.selfPublishRandomLines, false)
+  // 显式 true / 非布尔缺省都归 true
+  assert.equal(normalizeConfig({ selfPublishRandomLines: true }).selfPublishRandomLines, true)
+  assert.equal(normalizeConfig({ selfPublishRandomLines: 'no' }).selfPublishRandomLines, true)
+})
+
+test('schema：Config 导出可校验且不吞未知键（mode/targets 等保留）', () => {
+  const { Config } = require('../lib/schema')
+  assert.notEqual(Config, null)
+  const result = Config['~standard'].validate({ mode: 'listen', targets: [{ url: 'http://a/hook' }] })
+  assert.equal('then' in result, false) // 同步校验
+  assert.equal(result.issues, undefined)
+  // 未声明键合并保留（schemastery object 非 strict 解析）
+  assert.equal(result.value.mode, 'listen')
+  assert.deepEqual(result.value.targets, [{ url: 'http://a/hook' }])
+  // 缺省出默认值
+  const empty = Config['~standard'].validate({})
+  assert.equal(empty.value.selfPublishRandomLines, true)
+})
+
 test('normalizeTargets：过滤非法项并归一字段', () => {
   const t = normalizeTargets([
     { url: 'http://a/hook', token: 'x', events: true, timeoutMs: 1234 },

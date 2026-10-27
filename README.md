@@ -35,6 +35,15 @@ dsh plugin add github:XiaoPb/dsh-pet-bridge
 
 App 侧需配套（`PetProtocol.kt` 解析 `text`、`PetActionController.kt` 优先直显，protocol 2→3），未升级的 APK 上 text 被忽略、仍走模板，无副作用。
 
+**0.3.4（2026-10-28）**：`text` 缺失（无任务详情）时回落为 dsh-pet web `workStatusTexts` 的原文随机抽句——手机桌宠（protocol 3）据此直显，与浏览器宠物完全同款措辞；六档 kind 全带 text，前向兼容。
+
+**0.3.5（2026-10-28）**：随机词句自发布改为可配置。新增 **`selfPublishRandomLines`**（默认 `true`），并通过插件 `Config` schema（vendor 的 schemastery）暴露在 **dsh 设置界面**——设置 → 插件 → dsh-pet-bridge，一个开关：
+
+- **开（默认）**：行为同 0.3.4，无任务详情时由桥端随机抽 dsh-pet 同款台词放进 `text`；
+- **关**：`text` 只携带真实任务详情（可为 `null`），手机桌宠改用它**自己的台词库**（DSH Mobile 桌宠设置 → 台词库，六档工作状态台词可查看、编辑、导入导出）——用户想换措辞时改台词库即可，无需动桥。
+
+实现说明：dsh 设置服务按插件导出的 `Config` schema 自动生成表单页；引擎内置的 `@deepseek-ai/schemastery` 对第三方插件不可解析，因此随包 vendor 了 npm `schemastery@3.18.0` + `cosmokit@1.8.1`（均为 MIT，见 `lib/vendor/`）。schema 加载失败时静默降级（无设置页，开关默认开，行为不变）。
+
 ## 架构：怎么对接 dsh-pet
 
 dsh-pet 是自包含插件，通过 `session/event` 内部监听把 DSH 会话事件聚合成 6 档工作状态（thinking / working / result / waiting / success / error）+ todo 任务详情，发布在自己的 HTTP 路由上（桌面 Helper 消费同一份）。本桥两条数据通道对接：
@@ -100,6 +109,7 @@ webhook 信封（`version: 1`）：
 | `pollInterval` | `250` | v0.2.0：事件轮询间隔（ms），必须 >0 |
 | `enabled` | `true` | `false` 时装载但零推送 |
 | `auth` | `auto` | v0.2.0：`off`=刻意不带 `/bubble` token |
+| `selfPublishRandomLines` | `true` | v0.3.5：无任务详情时是否由桥端自发布随机台词（dsh-pet `workStatusTexts` 原文）。关闭后 text 只带真实任务详情，措辞交给手机桌宠台词库。对应 dsh 设置界面的开关 |
 
 ## 验证
 

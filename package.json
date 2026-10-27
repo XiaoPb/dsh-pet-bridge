@@ -1,6 +1,6 @@
 {
   "name": "@xiaopb/dsh-pet-bridge",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "DSH server plugin: bridge dsh-pet (desktop pet) and publish its events & info outward — listen to dsh-pet /state directly, replay-fallback via session/event, webhook push + loopback pull server, token-authenticated. Keeps the v0.2.0 /bubble push (X-DSH-Pet-Token) to the DSH Mobile desktop pet.",
   "main": "lib/index.js",
   "exports": {
